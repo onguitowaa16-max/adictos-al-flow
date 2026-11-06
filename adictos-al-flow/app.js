@@ -65,6 +65,7 @@ const mName = document.getElementById("mName");
 const mPrice = document.getElementById("mPrice");
 const mDesc = document.getElementById("mDesc");
 const sizesBox = document.getElementById("sizes");
+const addCartBtn = document.getElementById("addCartBtn");
 const orderBtn = document.getElementById("orderBtn");
 const toastEl = document.getElementById("toast");
 
@@ -111,6 +112,7 @@ function refreshStore() {
   applyStoreSettings();
   renderGrid();
   if (currentProduct) mPrice.textContent = formatPrice(currentProduct.price);
+  if (window.CART) window.CART.render();
 }
 
 function setCurrency(code) {
@@ -125,6 +127,7 @@ function setCurrency(code) {
   } catch (e) {}
   renderGrid();
   if (currentProduct) mPrice.textContent = formatPrice(currentProduct.price);
+  if (window.CART) window.CART.render();
 }
 
 function renderGrid() {
@@ -269,8 +272,18 @@ function orderWhatsapp() {
     return;
   }
 
-  if (window.ACCOUNTS) window.ACCOUNTS.addOrder(currentProduct, selectedSize);
   window.open(buildWhatsappUrl(currentProduct, selectedSize), "_blank", "noopener");
+}
+
+function addToCart() {
+  if (!currentProduct) return;
+
+  if (!selectedSize) {
+    showToast("Elige una talla primero");
+    return;
+  }
+
+  if (window.CART) window.CART.add(currentProduct, selectedSize);
 }
 
 function renderHero() {
@@ -338,6 +351,7 @@ document.addEventListener("click", () => {
 });
 
 modalClose.addEventListener("click", closeModal);
+addCartBtn.addEventListener("click", addToCart);
 orderBtn.addEventListener("click", orderWhatsapp);
 
 modal.addEventListener("click", (e) => {

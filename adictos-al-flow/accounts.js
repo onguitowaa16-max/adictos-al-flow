@@ -10,7 +10,7 @@
         <div class="acct-view" id="acctAuth">
           <div class="acct-eyebrow">ADICTOS AL FLOW · CUENTA</div>
           <h2 id="acctTitle">Tu cuenta</h2>
-          <p class="acct-sub">Opcional. Puedes pedir por WhatsApp sin crear cuenta. Con una cuenta guardas tus favoritos y tus pedidos en este dispositivo.</p>
+          <p class="acct-sub">Opcional. Puedes pedir por WhatsApp sin crear cuenta. Con una cuenta guardas tus favoritos en este dispositivo.</p>
 
           <div class="acct-tabs" role="tablist" aria-label="Acceso">
             <button class="acct-tab active" type="button" data-tab="login" role="tab" aria-selected="true">Entrar</button>
@@ -52,19 +52,9 @@
           <h2 id="acctHomeTitle">Hola</h2>
           <p class="acct-sub" id="acctMeta"></p>
 
-          <div class="acct-stats">
-            <div class="acct-stat"><strong id="acctFavCount">0</strong><span>FAVORITOS</span></div>
-            <div class="acct-stat"><strong id="acctOrderCount">0</strong><span>PEDIDOS</span></div>
-          </div>
-
           <section class="acct-sec">
-            <h3>Favoritos</h3>
+            <h3>Favoritos <span class="acct-count" id="acctFavCount">0</span></h3>
             <div class="fav-list" id="favList"></div>
-          </section>
-
-          <section class="acct-sec">
-            <h3>Mis pedidos</h3>
-            <div class="order-list" id="orderList"></div>
           </section>
 
           <div class="acct-actions">
@@ -72,7 +62,7 @@
             <button class="acct-out danger" id="deleteBtn" type="button">Eliminar cuenta</button>
           </div>
 
-          <p class="acct-fine">Cuenta local de este dispositivo. Los pedidos se completan por WhatsApp y no se envían a ningún servidor.</p>
+          <p class="acct-fine">Cuenta local de este dispositivo. Tus favoritos se guardan solo en este navegador.</p>
         </div>
       </div>
     </div>`;
@@ -91,9 +81,7 @@
   const homeTitle = document.getElementById("acctHomeTitle");
   const metaEl = document.getElementById("acctMeta");
   const favCountEl = document.getElementById("acctFavCount");
-  const orderCountEl = document.getElementById("acctOrderCount");
   const favList = document.getElementById("favList");
-  const orderList = document.getElementById("orderList");
   const logoutBtn = document.getElementById("logoutBtn");
   const deleteBtn = document.getElementById("deleteBtn");
   const accountBtn = document.getElementById("accountBtn");
@@ -111,10 +99,6 @@
   accounts.forEach((a) => {
     if (!Array.isArray(a.favs)) {
       a.favs = [];
-      migrated = true;
-    }
-    if (!Array.isArray(a.orders)) {
-      a.orders = [];
       migrated = true;
     }
   });
@@ -195,12 +179,6 @@
   function price(value) {
     if (typeof window.formatPrice === "function") return window.formatPrice(value);
     return "RD$" + Number(value || 0).toLocaleString("en-US");
-  }
-
-  function dateLabel(iso) {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("es-DO", { day: "numeric", month: "short", year: "numeric" });
   }
 
   function findProduct(id) {
@@ -285,9 +263,7 @@
     homeTitle.textContent = "Hola, " + current.name.split(/\s+/)[0];
     metaEl.textContent = current.email;
     favCountEl.textContent = current.favs.length;
-    orderCountEl.textContent = current.orders.length;
     renderFavs();
-    renderOrders();
   }
 
   function renderFavs() {
@@ -308,26 +284,6 @@
           <button class="fav-remove" type="button" data-remove="${esc(p.id)}" aria-label="Quitar de favoritos">✕</button>
         </div>`
       )
-      .join("");
-  }
-
-  function renderOrders() {
-    if (!current.orders.length) {
-      orderList.innerHTML = '<p class="acct-empty">Cuando pidas por WhatsApp con la sesión abierta, el pedido aparecerá aquí.</p>';
-      return;
-    }
-    orderList.innerHTML = current.orders
-      .map((o) => {
-        const openable = findProduct(o.productId);
-        return `
-        <div class="order-item"${openable ? ` data-open="${esc(o.productId)}" role="button" tabindex="0"` : ""}>
-          <div>
-            <strong>${esc(o.name)}</strong>
-            <small>Talla ${esc(o.size)} · ${dateLabel(o.date)}</small>
-          </div>
-          <span class="order-price">${price(o.price)}</span>
-        </div>`;
-      })
       .join("");
   }
 
@@ -399,7 +355,6 @@
       hash,
       algo,
       favs: [],
-      orders: [],
       createdAt: new Date().toISOString(),
     };
     accounts.push(account);
@@ -488,22 +443,6 @@
       if (typeof window.openModal === "function") window.openModal(item.dataset.id);
     });
 
-    orderList.addEventListener("click", (e) => {
-      const item = e.target.closest("[data-open]");
-      if (!item) return;
-      closeAccount();
-      if (typeof window.openModal === "function") window.openModal(item.dataset.open);
-    });
-
-    orderList.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const item = e.target.closest("[data-open]");
-      if (!item) return;
-      e.preventDefault();
-      closeAccount();
-      if (typeof window.openModal === "function") window.openModal(item.dataset.open);
-    });
-
     logoutBtn.addEventListener("click", () => {
       current = null;
       writeSession(null);
@@ -515,7 +454,7 @@
 
     deleteBtn.addEventListener("click", () => {
       if (!current) return;
-      if (!confirm("¿Eliminar tu cuenta de este dispositivo? Se borrarán tus favoritos y pedidos guardados.")) return;
+      if (!confirm("¿Eliminar tu cuenta de este dispositivo? Se borrarán tus favoritos guardados.")) return;
       accounts = accounts.filter((a) => a.id !== current.id);
       current = null;
       writeAccounts();
@@ -543,19 +482,6 @@
     open: openAccount,
     get logged() {
       return !!current;
-    },
-    addOrder(product, size) {
-      if (!current || !product) return;
-      current.orders.unshift({
-        productId: product.id,
-        name: product.name,
-        size: String(size || ""),
-        price: Number(product.price) || 0,
-        date: new Date().toISOString(),
-      });
-      if (current.orders.length > 50) current.orders.length = 50;
-      writeAccounts();
-      if (!panel.hidden) renderHome();
     },
   };
 

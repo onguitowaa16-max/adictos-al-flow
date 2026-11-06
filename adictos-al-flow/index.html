@@ -22,10 +22,16 @@
         <span class="logo-shine" aria-hidden="true"></span>
       </span>
     </a>
-    <button class="account-btn" id="accountBtn" type="button" aria-haspopup="dialog" aria-label="Crear cuenta o iniciar sesión">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
-      <span id="accountBtnText">CUENTA</span>
-    </button>
+    <div class="header-actions">
+      <button class="cart-btn" id="cartBtn" type="button" aria-haspopup="dialog" aria-label="Abrir carrito">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.4a2 2 0 0 0 1.96 1.6H18a2 2 0 0 0 1.96-1.55L21.6 7H6"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+        <span class="cart-badge" id="cartBadge" hidden>0</span>
+      </button>
+      <button class="account-btn" id="accountBtn" type="button" aria-haspopup="dialog" aria-label="Crear cuenta o iniciar sesión">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+        <span id="accountBtnText">CUENTA</span>
+      </button>
+    </div>
   </header>
 
   <nav class="cat-nav" aria-label="Categorías">
@@ -99,6 +105,10 @@
         <div class="m-label">Elige tu talla</div>
         <div class="sizes" id="sizes"></div>
 
+        <button class="btn-cart" id="addCartBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.4a2 2 0 0 0 1.96 1.6H18a2 2 0 0 0 1.96-1.55L21.6 7H6"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+          Añadir al carrito
+        </button>
         <button class="btn-wa" id="orderBtn">Pedir por WhatsApp</button>
         <p class="m-note">Pedido mínimo de 3 productos · Entrega en República Dominicana</p>
       </div>
@@ -116,6 +126,7 @@
   <script src="products.js" defer></script>
   <script src="accounts.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="cart.js" defer></script>
   <script src="admin.js" defer></script>
 </body>
 </html>
