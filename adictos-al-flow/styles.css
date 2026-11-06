@@ -931,6 +931,51 @@ body.modal-open {
   transform: scale(.99);
 }
 
+.btn-share {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fff;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.btn-share svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn-share:hover {
+  background: var(--accent-soft);
+}
+
+.btn-share:active {
+  transform: scale(.99);
+}
+
+.btn-share:disabled {
+  opacity: .55;
+  cursor: progress;
+}
+
+.btn-share[hidden] {
+  display: none;
+}
+
 .m-note {
   margin: 10px 0 0;
   text-align: center;
