@@ -4,13 +4,18 @@ chcp 65001 >nul
 title Subir Adictos al Flow a GitHub
 cd /d "%~dp0"
 
+set "GIT=git"
 where git >nul 2>&1
 if errorlevel 1 (
-  echo.
-  echo Git no esta instalado. Descargalo en https://git-scm.com/download/win
-  echo.
-  pause
-  exit /b 1
+  if exist "%ProgramFiles%\Git\cmd\git.exe" (
+    set "GIT=%ProgramFiles%\Git\cmd\git.exe"
+  ) else (
+    echo.
+    echo Git no esta instalado. Descargalo en https://git-scm.com/download/win
+    echo.
+    pause
+    exit /b 1
+  )
 )
 
 echo.
@@ -37,13 +42,13 @@ start "" "https://github.com/new?name=%REPO%"
 echo Pulsa una tecla cuando el repositorio ya este creado...
 pause >nul
 
-git remote remove origin >nul 2>&1
-git remote add origin "https://github.com/%GHUSER%/%REPO%.git"
-git branch -M main
+"%GIT%" remote remove origin >nul 2>&1
+"%GIT%" remote add origin "https://github.com/%GHUSER%/%REPO%.git"
+"%GIT%" branch -M main
 
 echo.
 echo Subiendo archivos...
-git push -u origin main
+"%GIT%" push -u origin main
 if errorlevel 1 (
   echo.
   echo No se pudo subir. Revisa el usuario y el nombre del repositorio.
