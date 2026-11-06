@@ -12,6 +12,7 @@ con seguridad real (servidor Express + SQLite).
 | `INICIAR-TIENDA.bat` | Arranca la tienda con el servidor en tu PC. |
 | `SUBIR-A-GITHUB.bat` | Sube el proyecto a tu cuenta de GitHub. |
 | `render.yaml` | Configuración para publicar el servidor completo en Render. |
+| `netlify.toml` | Publica la tienda estática en Netlify. |
 | `.github/workflows/pages.yml` | Publica la tienda estática en GitHub Pages. |
 
 La cuenta de administrador se configura en `tienda-server/.env`.
@@ -53,6 +54,23 @@ primer despliegue.
 **Importante:** GitHub Pages solo sirve archivos. Allí el botón **Admin** muestra
 un aviso y no permite administrar: la seguridad y los cambios compartidos
 necesitan el servidor de la sección 3. Usa Pages para mostrar el catálogo.
+
+### Publicarlo también en Netlify
+
+Netlify publica la misma tienda estática y te da un subdominio gratis
+`algo.netlify.app`.
+
+1. Entra en [netlify.com](https://www.netlify.com) e inicia sesión con GitHub.
+2. **Add new site → Import an existing project → GitHub** y elige el repositorio.
+3. Netlify lee `netlify.toml`: publica la carpeta `adictos-al-flow`, sin comando
+   de build. Solo confirma y pulsa **Deploy**.
+4. La tienda queda en `https://NOMBRE.netlify.app`. Puedes cambiar el nombre en
+   **Site configuration → Change site name**.
+5. Para un dominio propio: **Domain management → Add a domain**. Si el DNS está
+   en Netlify se configura solo; si está en otro proveedor, crea el CNAME que
+   Netlify indique apuntando a `NOMBRE.netlify.app`.
+
+En Netlify el botón **Admin** también muestra el aviso, igual que en Pages.
 
 ---
 
@@ -106,8 +124,8 @@ GitHub indique.
 - La configuración se genera en `/config.js` desde la base de datos.
 
 Lo que no incluye: recuperación de contraseña por correo y cuentas de clientes en
-el servidor. Las cuentas de clientes (favoritos y pedidos) siguen guardándose en
-el navegador de cada persona, como hasta ahora.
+el servidor. Las cuentas de clientes (favoritos) siguen guardándose en el
+navegador de cada persona, como hasta ahora.
 
 ---
 
