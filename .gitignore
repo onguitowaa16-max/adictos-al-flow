@@ -1,0 +1,20 @@
+# Bot de Discord: no forma parte de la tienda y no se publica.
+/node_modules/
+/src/
+/bot.log
+/.env
+/logo.png
+/package.json
+/package-lock.json
+/README.md
+
+# Servidor de la tienda: datos privados y dependencias.
+/tienda-server/node_modules/
+/tienda-server/data/
+/tienda-server/.env
+*.log
+
+# Capturas de pruebas.
+/_qa*.png
+
+.DS_Store

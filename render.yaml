@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: adictos-al-flow
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: cd tienda-server && npm install --omit=dev
+    startCommand: node tienda-server/server.mjs
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: STORE_DB
+        value: /data/store.db
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: adictos-data
+      mountPath: /data
+      sizeGB: 1

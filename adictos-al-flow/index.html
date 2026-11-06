@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adictos al Flow Boutique — Streetwear RD</title>
+  <meta name="description" content="Adictos al Flow Boutique. Ropa, zapatillas y accesorios streetwear en República Dominicana. Pide por WhatsApp.">
+  <meta name="theme-color" content="#111111">
+  <link rel="icon" href="assets/logo.webp" type="image/webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="top-strip">PEDIDO MÍNIMO DE 3 PRODUCTOS O MÁS</div>
+
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="Adictos al Flow Boutique — inicio">
+      <span class="logo-wrap">
+        <img src="assets/logo.webp" alt="Adictos al Flow Boutique" width="560" height="402">
+        <span class="logo-shine" aria-hidden="true"></span>
+      </span>
+    </a>
+    <button class="account-btn" id="accountBtn" type="button" aria-haspopup="dialog" aria-label="Crear cuenta o iniciar sesión">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span id="accountBtnText">CUENTA</span>
+    </button>
+  </header>
+
+  <nav class="cat-nav" aria-label="Categorías">
+    <button class="cat-btn active" data-cat="ropa">ROPA</button>
+    <button class="cat-btn" data-cat="zapatillas">ZAPATILLAS</button>
+    <button class="cat-btn" data-cat="accesorios">ACCESORIOS</button>
+
+    <div class="currency-wrap">
+      <button id="currency-btn" aria-haspopup="listbox" aria-expanded="false">$DOP</button>
+      <div id="currency-dropdown" role="listbox" aria-label="Moneda">
+        <button role="option" data-cur="DOP" aria-selected="true">DOP · Peso dominicano</button>
+        <button role="option" data-cur="USD" aria-selected="false">USD · Dólar</button>
+        <button role="option" data-cur="EUR" aria-selected="false">EUR · Euro</button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero" aria-label="Bienvenida">
+      <div class="hero-copy">
+        <span class="hero-eyebrow">ADICTOS AL FLOW · STREETWEAR RD</span>
+        <h1>ROPA, ZAPAS Y ACCESORIOS<br><em>DE DISEÑO</em></h1>
+        <p><strong id="heroCount">265</strong> modelos disponibles · Pedido mínimo de 3 piezas · Pide por WhatsApp</p>
+        <div class="hero-actions">
+          <button class="hero-btn primary" type="button" data-hero-cat="ropa">Ver ropa</button>
+          <button class="hero-btn" type="button" data-hero-cat="zapatillas">Ver zapatillas</button>
+        </div>
+      </div>
+      <div class="hero-media" aria-hidden="true">
+        <span class="hero-badge">MÍN.<br>3 PIEZAS</span>
+        <img class="hero-img a" alt="" width="300" height="300">
+        <img class="hero-img b" alt="" width="300" height="300">
+      </div>
+    </section>
+
+    <div class="section-head" id="sectionHead" hidden>
+      <h2 id="sectionTitle"></h2>
+      <span class="section-count" id="sectionCount"></span>
+    </div>
+
+    <section class="grid" id="grid" aria-live="polite"></section>
+
+    <div class="empty" id="empty" hidden>No hay productos en esta categoría todavía.</div>
+  </main>
+
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mName">
+      <button class="close" id="modalClose" aria-label="Cerrar">✕</button>
+
+      <div class="modal-img-area">
+        <div class="slider">
+          <div class="slider-track" id="track"></div>
+          <button class="arrow left" id="prevBtn" aria-label="Foto anterior">‹</button>
+          <button class="arrow right" id="nextBtn" aria-label="Foto siguiente">›</button>
+        </div>
+        <div class="dots" id="dots"></div>
+      </div>
+
+      <div class="modal-info">
+        <div class="m-cat" id="mCat"></div>
+        <h2 class="m-name" id="mName"></h2>
+        <div class="m-price-row">
+          <div class="m-price" id="mPrice"></div>
+          <button class="m-fav" id="mFav" type="button" aria-pressed="false" aria-label="Guardar en favoritos">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4S4.8 15.9 3 11.7A5.2 5.2 0 0 1 12 6.4a5.2 5.2 0 0 1 9 5.3c-1.8 4.2-9 8.7-9 8.7z"/></svg>
+            <span id="mFavText">Favorito</span>
+          </button>
+        </div>
+        <p class="m-desc" id="mDesc"></p>
+
+        <div class="m-label">Elige tu talla</div>
+        <div class="sizes" id="sizes"></div>
+
+        <button class="btn-wa" id="orderBtn">Pedir por WhatsApp</button>
+        <p class="m-note">Pedido mínimo de 3 productos · Entrega en República Dominicana</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <footer class="footer">
+    © <span id="year">2026</span> ADICTOS AL FLOW BOUTIQUE · Santo Domingo, República Dominicana
+    <button class="footer-admin" id="adminLink" type="button">Admin</button>
+  </footer>
+
+  <script src="config.js" defer></script>
+  <script src="products.js" defer></script>
+  <script src="accounts.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="admin.js" defer></script>
+</body>
+</html>
