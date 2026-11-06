@@ -50,10 +50,9 @@ primer despliegue.
 4. En 1–2 minutos la tienda queda en:
    `https://TU-USUARIO.github.io/adictos-al-flow/`
 
-**Importante:** GitHub Pages solo sirve archivos. Allí el panel funciona en modo
-local (la contraseña se comprueba en el navegador y los cambios se guardan en ese
-dispositivo). No hay servidor, así que **no** ofrece la seguridad real de la
-sección 3. Úsalo para mostrar el catálogo, no para administrar la tienda.
+**Importante:** GitHub Pages solo sirve archivos. Allí el botón **Admin** muestra
+un aviso y no permite administrar: la seguridad y los cambios compartidos
+necesitan el servidor de la sección 3. Usa Pages para mostrar el catálogo.
 
 ---
 

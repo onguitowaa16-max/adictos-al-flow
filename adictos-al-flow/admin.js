@@ -1,15 +1,7 @@
 (function () {
   if (!window.STORE) return;
 
-  const ADMIN_SALT = "c81a3558c283ea38211bf7c33c8b39ad";
-  const ADMIN_EMAIL_SHA = "7698cc4954f6fbf021e837c103e6ce54759f6c5feabf8d6527606b9f5c3cb6b6";
-  const ADMIN_PASS_SHA = "bdd24908a786ce0edd05ad2cfc464a4b0a04f6278cc484c628c5784bcf1dd108";
-  const ADMIN_EMAIL_FNV = "165fef7504a59995";
-  const ADMIN_PASS_FNV = "920b8b2590d7d025";
-  const ADMIN_SESSION_KEY = "aaf-admin-session";
-  const ADMIN_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
-
-  const server = { checked: false, active: false };
+  const server = { active: window.STORE_SERVER === true };
   let csrf = "";
 
   const html = `
@@ -24,7 +16,7 @@
         </div>
 
         <div class="admin-login" id="adminLogin" hidden>
-          <p class="admin-login-sub" id="adminLoginSub">Ingresa con tu cuenta de administrador. La sesión se guarda en este navegador.</p>
+          <p class="admin-login-sub">Entra con tu cuenta de administrador. La sesión se valida en el servidor.</p>
           <form class="admin-login-form" id="adminLoginForm" novalidate>
             <label class="admin-label" for="admEmail">Email</label>
             <input class="admin-input" id="admEmail" type="email" autocomplete="username" maxlength="80" placeholder="Tu correo">
@@ -33,7 +25,14 @@
             <div class="admin-status" id="adminLoginMsg" role="alert"></div>
             <button class="admin-btn primary admin-login-btn" type="submit">Entrar al panel</button>
           </form>
-          <p class="admin-login-note" id="adminLoginNote">La sesión permanece abierta durante 30 días en este dispositivo.</p>
+          <p class="admin-login-note">Sesión protegida durante 30 días. Usa “Cerrar sesión” al terminar en un equipo compartido.</p>
+        </div>
+
+        <div class="admin-static" id="adminStatic" hidden>
+          <p class="admin-login-sub">Esta copia de la tienda es estática (GitHub Pages).</p>
+          <p class="admin-static-text">El panel de administración necesita el servidor seguro. Publica el proyecto con <strong>render.yaml</strong> para cambiar el WhatsApp, las tasas y la franja para todos tus clientes.</p>
+          <p class="admin-static-text">Aquí los cambios no se pueden publicar.</p>
+          <button class="admin-btn primary" id="adminStaticClose" type="button">Entendido</button>
         </div>
 
         <div class="admin-body" id="adminBody" hidden>
@@ -74,11 +73,9 @@
 
           <div class="admin-actions">
             <button class="admin-btn primary" id="admSave" type="button">Guardar cambios</button>
-            <button class="admin-btn" id="admDownload" type="button">Descargar config.js</button>
           </div>
 
-          <p class="admin-note" id="adminNote">Los cambios se aplican al instante en este navegador. Para que los vean tus clientes, descarga <strong>config.js</strong> y reemplaza el archivo en la carpeta del sitio.</p>
-          <button class="admin-reset" id="admReset" type="button">Descartar cambios locales</button>
+          <p class="admin-note">Los cambios se guardan en el servidor y los ven todos tus clientes al instante.</p>
           <button class="admin-logout" id="admLogout" type="button">Cerrar sesión de administrador</button>
         </div>
       </div>
@@ -89,11 +86,10 @@
   const panel = document.getElementById("adminPanel");
   const closeBtn = document.getElementById("adminClose");
   const adminLogin = document.getElementById("adminLogin");
+  const adminStatic = document.getElementById("adminStatic");
+  const adminStaticClose = document.getElementById("adminStaticClose");
   const adminBody = document.getElementById("adminBody");
   const adminTitle = document.getElementById("adminTitle");
-  const adminLoginSub = document.getElementById("adminLoginSub");
-  const adminLoginNote = document.getElementById("adminLoginNote");
-  const adminNote = document.getElementById("adminNote");
   const loginForm = document.getElementById("adminLoginForm");
   const loginMsg = document.getElementById("adminLoginMsg");
   const emailInput = document.getElementById("admEmail");
@@ -106,8 +102,6 @@
   const catalogMeta = document.getElementById("admCatalog");
   const statusBox = document.getElementById("admStatus");
   const saveBtn = document.getElementById("admSave");
-  const downloadBtn = document.getElementById("admDownload");
-  const resetBtn = document.getElementById("admReset");
   const logoutBtn = document.getElementById("admLogout");
 
   function counts() {
@@ -133,56 +127,6 @@
     eurInput.value = STORE.config.eurRate;
     stripOn.checked = STORE.config.stripEnabled !== false;
     stripText.value = STORE.config.stripText || "";
-  }
-
-  function subtleReady() {
-    return !!(window.crypto && window.crypto.subtle && window.TextEncoder);
-  }
-
-  async function sha256Hex(text) {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(buf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
-
-  function fnvHex(text) {
-    let h1 = 0x811c9dc5;
-    let h2 = 5381;
-    for (let round = 0; round < 2000; round++) {
-      for (let i = 0; i < text.length; i++) {
-        const c = text.charCodeAt(i);
-        h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
-        h2 = (Math.imul(h2, 33) + c) >>> 0;
-      }
-    }
-    return h1.toString(16).padStart(8, "0") + h2.toString(16).padStart(8, "0");
-  }
-
-  async function digest(kind, value) {
-    const input = ADMIN_SALT + ":" + kind + ":" + value + ":aaf-admin";
-    if (subtleReady()) return { algo: "sha256", hash: await sha256Hex(input) };
-    return { algo: "fnv", hash: fnvHex(input) };
-  }
-
-  async function initMode() {
-    if (server.checked) return server.active;
-    server.checked = true;
-    try {
-      const res = await fetch("/api/health", {
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      });
-      const type = res.headers.get("content-type") || "";
-      if (res.ok && type.includes("application/json")) {
-        const data = await res.json();
-        server.active = !!(data && data.mode === "server");
-      }
-    } catch (e) {
-      server.active = false;
-    }
-    return server.active;
   }
 
   async function api(path, options) {
@@ -212,66 +156,27 @@
     }
   }
 
-  function applyModeUi() {
-    downloadBtn.hidden = server.active;
-    resetBtn.hidden = server.active;
-    adminLoginSub.textContent = server.active
-      ? "Entra con tu cuenta de administrador. La sesión se valida en el servidor."
-      : "Ingresa con tu cuenta de administrador. La sesión se guarda en este navegador.";
-    adminLoginNote.textContent = server.active
-      ? "Sesión protegida durante 30 días. Usa “Cerrar sesión” al terminar en un equipo compartido."
-      : "La sesión permanece abierta durante 30 días en este dispositivo.";
-    adminNote.innerHTML = server.active
-      ? "Los cambios se guardan en el servidor y los ven todos tus clientes al instante."
-      : "Los cambios se aplican al instante en este navegador. Para que los vean tus clientes, descarga <strong>config.js</strong> y reemplaza el archivo en la carpeta del sitio.";
-  }
-
-  function hasAdminSession() {
-    try {
-      const session = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || "null");
-      return !!(session && Number(session.until) > Date.now());
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function saveAdminSession() {
-    try {
-      localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ until: Date.now() + ADMIN_SESSION_MS }));
-    } catch (e) {}
-  }
-
-  function clearAdminSession() {
-    try {
-      localStorage.removeItem(ADMIN_SESSION_KEY);
-    } catch (e) {}
-  }
-
   function showAdminLogin() {
     adminTitle.textContent = "Acceso administrador";
     adminLogin.hidden = false;
+    adminStatic.hidden = true;
     adminBody.hidden = true;
     setLoginStatus("", "");
     setTimeout(() => emailInput.focus(), 40);
   }
 
-  function showAdminConfig() {
-    adminTitle.textContent = "Configuración de la tienda";
+  function showStaticNotice() {
+    adminTitle.textContent = "Panel no disponible";
     adminLogin.hidden = true;
-    adminBody.hidden = false;
-    fillForm();
-    catalogMeta.textContent = counts();
-    if (STORE.hasLocal) {
-      setStatus("Tienes cambios guardados solo en este navegador. Descarga config.js para publicarlos.", "warn");
-    } else {
-      setStatus("Configuración cargada desde config.js.", "");
-    }
+    adminStatic.hidden = false;
+    adminBody.hidden = true;
     closeBtn.focus();
   }
 
   function showServerConfig(config) {
     adminTitle.textContent = "Configuración de la tienda";
     adminLogin.hidden = true;
+    adminStatic.hidden = true;
     adminBody.hidden = false;
     if (config) STORE.apply(config);
     STORE.clearLocal();
@@ -286,25 +191,22 @@
     document.body.classList.add("admin-open");
     adminTitle.textContent = "Acceso administrador";
     adminLogin.hidden = false;
+    adminStatic.hidden = true;
     adminBody.hidden = true;
 
-    const isServer = await initMode();
-    applyModeUi();
-
-    if (isServer) {
-      const me = await api("/api/admin/me");
-      if (me.ok && me.data && me.data.authenticated) {
-        csrf = me.data.csrf;
-        showServerConfig(me.data.config);
-      } else {
-        csrf = "";
-        showAdminLogin();
-      }
+    if (!server.active) {
+      showStaticNotice();
       return;
     }
 
-    if (hasAdminSession()) showAdminConfig();
-    else showAdminLogin();
+    const me = await api("/api/admin/me");
+    if (me.ok && me.data && me.data.authenticated) {
+      csrf = me.data.csrf;
+      showServerConfig(me.data.config);
+    } else {
+      csrf = "";
+      showAdminLogin();
+    }
   }
 
   function closeAdmin() {
@@ -328,52 +230,30 @@
 
     setLoginStatus("Comprobando…", "");
 
-    if (server.active) {
-      const res = await api("/api/admin/login", { method: "POST", body: { email, password: pass } });
-      if (res.status === 429) {
-        setLoginStatus("Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.", "err");
-        return;
-      }
-      if (!res.ok || !res.data || !res.data.ok) {
-        setLoginStatus(
-          res.status === 401 ? "Email o contraseña incorrectos." : "No se pudo iniciar sesión. Inténtalo de nuevo.",
-          "err"
-        );
-        passInput.value = "";
-        passInput.focus();
-        return;
-      }
-
-      csrf = res.data.csrf;
-      loginForm.reset();
-      setLoginStatus("", "");
-      const me = await api("/api/admin/me");
-      if (me.ok && me.data && me.data.authenticated) {
-        showServerConfig(me.data.config);
-      } else {
-        setLoginStatus("No se pudo abrir la sesión. Inténtalo de nuevo.", "err");
-      }
+    const res = await api("/api/admin/login", { method: "POST", body: { email, password: pass } });
+    if (res.status === 429) {
+      setLoginStatus("Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.", "err");
       return;
     }
-
-    const emailDigest = await digest("email", email);
-    const passDigest = await digest("pass", pass);
-    const ok =
-      emailDigest.algo === "sha256"
-        ? emailDigest.hash === ADMIN_EMAIL_SHA && passDigest.hash === ADMIN_PASS_SHA
-        : emailDigest.hash === ADMIN_EMAIL_FNV && passDigest.hash === ADMIN_PASS_FNV;
-
-    if (!ok) {
-      setLoginStatus("Email o contraseña incorrectos.", "err");
+    if (!res.ok || !res.data || !res.data.ok) {
+      setLoginStatus(
+        res.status === 401 ? "Email o contraseña incorrectos." : "No se pudo iniciar sesión. Inténtalo de nuevo.",
+        "err"
+      );
       passInput.value = "";
       passInput.focus();
       return;
     }
 
-    saveAdminSession();
+    csrf = res.data.csrf;
     loginForm.reset();
     setLoginStatus("", "");
-    showAdminConfig();
+    const me = await api("/api/admin/me");
+    if (me.ok && me.data && me.data.authenticated) {
+      showServerConfig(me.data.config);
+    } else {
+      setLoginStatus("No se pudo abrir la sesión. Inténtalo de nuevo.", "err");
+    }
   }
 
   function validateForm() {
@@ -408,84 +288,49 @@
 
   async function saveForm() {
     const next = validateForm();
-    if (!next) return false;
+    if (!next) return;
 
-    if (server.active) {
-      saveBtn.disabled = true;
-      setStatus("Guardando en el servidor…", "");
-      const res = await api("/api/admin/config", { method: "PUT", body: next, csrf });
-      saveBtn.disabled = false;
+    saveBtn.disabled = true;
+    setStatus("Guardando en el servidor…", "");
+    const res = await api("/api/admin/config", { method: "PUT", body: next, csrf });
+    saveBtn.disabled = false;
 
-      if (res.status === 401) {
-        csrf = "";
-        showAdminLogin();
-        setLoginStatus("Tu sesión expiró. Vuelve a entrar.", "err");
-        return false;
-      }
-      if (!res.ok || !res.data || !res.data.ok) {
-        setStatus(
-          res.status === 403
-            ? "No se pudo verificar la sesión. Recarga la página e inténtalo de nuevo."
-            : "No se pudo guardar en el servidor. Inténtalo de nuevo.",
-          "err"
-        );
-        return false;
-      }
-
-      STORE.apply(res.data.config);
-      STORE.clearLocal();
-      waInput.value = next.whatsappNumber;
-      setStatus("Guardado en el servidor. Tus clientes ya ven los cambios.", "ok");
-      return true;
+    if (res.status === 401) {
+      csrf = "";
+      showAdminLogin();
+      setLoginStatus("Tu sesión expiró. Vuelve a entrar.", "err");
+      return;
+    }
+    if (!res.ok || !res.data || !res.data.ok) {
+      setStatus(
+        res.status === 403
+          ? "No se pudo verificar la sesión. Recarga la página e inténtalo de nuevo."
+          : "No se pudo guardar en el servidor. Inténtalo de nuevo.",
+        "err"
+      );
+      return;
     }
 
-    STORE.apply(next);
-    STORE.persist();
+    STORE.apply(res.data.config);
+    STORE.clearLocal();
     waInput.value = next.whatsappNumber;
-    setStatus("Cambios guardados en este navegador. Descarga config.js para publicarlos.", "ok");
-    return true;
-  }
-
-  async function downloadConfig() {
-    if (!(await saveForm())) return;
-    const blob = new Blob([STORE.buildConfigSource()], { type: "text/javascript;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "config.js";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    setStatus("config.js descargado. Reemplaza el archivo en la carpeta del sitio para publicar los cambios.", "ok");
+    setStatus("Guardado en el servidor. Tus clientes ya ven los cambios.", "ok");
   }
 
   loginForm.addEventListener("submit", submitLogin);
   saveBtn.addEventListener("click", function () {
     saveForm();
   });
-  downloadBtn.addEventListener("click", function () {
-    downloadConfig();
-  });
 
-  resetBtn.addEventListener("click", function () {
-    if (!confirm("¿Descartar los cambios guardados en este navegador y volver a la configuración de config.js?")) return;
-    STORE.clearLocal();
-    location.reload();
-  });
+  adminStaticClose.addEventListener("click", closeAdmin);
 
   logoutBtn.addEventListener("click", async function () {
-    if (server.active) {
-      logoutBtn.disabled = true;
-      await api("/api/admin/logout", { method: "POST", csrf });
-      logoutBtn.disabled = false;
-      csrf = "";
-      showAdminLogin();
-      setLoginStatus("Sesión cerrada.", "");
-      return;
-    }
-    clearAdminSession();
+    logoutBtn.disabled = true;
+    await api("/api/admin/logout", { method: "POST", csrf });
+    logoutBtn.disabled = false;
+    csrf = "";
     showAdminLogin();
+    setLoginStatus("Sesión cerrada.", "");
   });
 
   closeBtn.addEventListener("click", closeAdmin);
