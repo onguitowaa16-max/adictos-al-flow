@@ -66,7 +66,6 @@ const mPrice = document.getElementById("mPrice");
 const mDesc = document.getElementById("mDesc");
 const sizesBox = document.getElementById("sizes");
 const orderBtn = document.getElementById("orderBtn");
-const shareBtn = document.getElementById("shareBtn");
 const toastEl = document.getElementById("toast");
 
 let currentCat = "ropa";
@@ -223,8 +222,6 @@ function openModal(id) {
     .map((s) => `<button class="size-btn" data-size="${esc(s)}">${esc(s)}</button>`)
     .join("");
 
-  if (shareBtn) shareBtn.hidden = !supportsFileShare();
-
   modal.classList.add("active");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
@@ -247,81 +244,16 @@ function pickSize(btn) {
   selectedSize = btn.dataset.size;
 }
 
-function buildOrderMessage(product, size) {
-  return [
+function buildWhatsappUrl(product, size) {
+  const lines = [
     "Hola, vengo de la página de Adictos al Flow.",
     "Quiero pedir:",
     "• " + product.name + " — Talla " + size,
     "Precio: " + formatDop(product.price),
     "",
     "¿Está disponible?",
-  ].join("\n");
-}
-
-function buildWhatsappUrl(product, size) {
-  const imageUrl = new URL(product.img[0], location.href).href;
-  const text = buildOrderMessage(product, size) + "\n\nFoto: " + imageUrl;
-  return "https://wa.me/" + CONFIG.whatsappNumber + "?text=" + encodeURIComponent(text);
-}
-
-function supportsFileShare() {
-  if (!navigator.share || !navigator.canShare) return false;
-  try {
-    const probe = new File([new Blob([""], { type: "image/jpeg" })], "foto.jpg", { type: "image/jpeg" });
-    return navigator.canShare({ files: [probe] });
-  } catch (e) {
-    return false;
-  }
-}
-
-async function makeShareFile(product) {
-  const url = new URL(product.img[0], location.href).href;
-  const res = await fetch(url, { cache: "force-cache" });
-  if (!res.ok) throw new Error("image");
-  const blob = await res.blob();
-  if (!/^image\//.test(blob.type)) throw new Error("image");
-
-  const name = String(product.id || "producto").replace(/[^a-z0-9-]/gi, "-");
-  if (typeof createImageBitmap !== "function") {
-    const ext = (blob.type.split("/")[1] || "webp").replace("jpeg", "jpg");
-    return new File([blob], name + "." + ext, { type: blob.type });
-  }
-
-  const bitmap = await createImageBitmap(blob);
-  const max = 1600;
-  const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-
-  const jpeg = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
-  if (!jpeg) throw new Error("convert");
-  return new File([jpeg], name + ".jpg", { type: "image/jpeg" });
-}
-
-async function shareProductPhoto() {
-  if (!currentProduct) return;
-
-  if (!selectedSize) {
-    showToast("Elige una talla primero");
-    return;
-  }
-
-  shareBtn.disabled = true;
-  try {
-    const file = await makeShareFile(currentProduct);
-    if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
-      showToast("Tu navegador no permite adjuntar la foto");
-      return;
-    }
-    if (window.ACCOUNTS) window.ACCOUNTS.addOrder(currentProduct, selectedSize);
-    await navigator.share({ files: [file], text: buildOrderMessage(currentProduct, selectedSize) });
-  } catch (error) {
-    if (!error || error.name !== "AbortError") showToast("No se pudo compartir la foto");
-  } finally {
-    shareBtn.disabled = false;
-  }
+  ];
+  return "https://wa.me/" + CONFIG.whatsappNumber + "?text=" + encodeURIComponent(lines.join("\n"));
 }
 
 function orderWhatsapp() {
@@ -407,7 +339,6 @@ document.addEventListener("click", () => {
 
 modalClose.addEventListener("click", closeModal);
 orderBtn.addEventListener("click", orderWhatsapp);
-if (shareBtn) shareBtn.addEventListener("click", shareProductPhoto);
 
 modal.addEventListener("click", (e) => {
   if (e.target === modal) closeModal();
